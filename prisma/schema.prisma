@@ -17,7 +17,7 @@ model User {
   id        String    @id @default(uuid())
   firstName String    @db.VarChar(30)
   lastName  String    @db.VarChar(30)
-  email     String    @db.VarChar(320)
+  email     String    @unique @db.VarChar(320)
   password  String
   isAdmin   Boolean   @default(false)
   posts     Post[]
