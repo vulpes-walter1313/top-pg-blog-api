@@ -59,8 +59,8 @@ async function main() {
         published: true,
       },
       select: {
-        id: true
-      }
+        id: true,
+      },
     });
 
     const commentsToBeMade: {
