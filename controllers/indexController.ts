@@ -39,17 +39,84 @@ export const loginPost = [
     }
     const token = jwt.sign({ sub: user.id }, process.env.JWT_SECRET!, {
       algorithm: "HS256",
-      expiresIn: "15m",
+      expiresIn: "4h",
     });
 
-    res.json({ success: true, token: token });
+    res.json({ success: true, token: `Bearer ${token}` });
   }),
 ];
+
 export const registerPost = [
-  (req: Request, res: Response, next: NextFunction) => {
-    res.json({ success: true, msg: "/register to be implemented" });
-  },
+  body("firstName")
+    .trim()
+    .isLength({ min: 3, max: 30 })
+    .withMessage("First name must be between 3 and 30 characters long"),
+  body("lastName")
+    .trim()
+    .isLength({ min: 3, max: 30 })
+    .withMessage("Last name must be between 3 and 30 characters long"),
+  body("email")
+    .trim()
+    .isEmail()
+    .withMessage("Email must be a valid email")
+    .custom(async (val) => {
+      try {
+        const dbUser = await db.user.findUnique({
+          where: {
+            email: val,
+          },
+        });
+        if (dbUser) {
+          throw new Error("Email already registered");
+        }
+      } catch (err) {
+        throw err;
+      }
+    }),
+  body("password")
+    .trim()
+    .isLength({ min: 8, max: 64 })
+    .withMessage("Password must be between 8 and 64 characters long"),
+  body("confirmPassword")
+    .custom((val, { req }) => val === req.body.password)
+    .withMessage("confirmPassword must match password"),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+
+    const firstName = String(data.firstName);
+    const lastName = String(data.lastName);
+    const email = String(data.email);
+    const passwordInput = String(data.password);
+    const passwordHash = await bcrypt.hash(passwordInput, 10);
+
+    const newUser = await db.user.create({
+      data: {
+        firstName: firstName,
+        lastName: lastName,
+        email: email,
+        password: passwordHash,
+      },
+    });
+
+    const token = jwt.sign({ sub: newUser.id }, process.env.JWT_SECRET!, {
+      expiresIn: "4h",
+      algorithm: "HS256",
+    });
+
+    res.json({
+      success: true,
+      msg: `User successfully registered: ${newUser.email}`,
+      token: `Bearer ${token}`,
+    });
+  }),
 ];
+
 export const indexGet = (req: Request, res: Response, next: NextFunction) => {
   res.json({ success: true, msg: "Hello to blogapi!" });
 };
