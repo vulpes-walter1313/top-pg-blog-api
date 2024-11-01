@@ -9,6 +9,9 @@ import HttpError from "./lib/httpError";
 import morgan from "morgan";
 import indexRouter from "./routes/indexRouter";
 import postsRouter from "./routes/postsRouter";
+import passport from "passport";
+import JwtStrategy from "passport-jwt";
+import db from "./db/db";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000");
@@ -22,6 +25,29 @@ if (process.env.NODE_ENV === "production") {
   app.use(morgan("dev"));
 }
 
+const passportOpts: JwtStrategy.StrategyOptionsWithoutRequest = {
+  secretOrKey: process.env.JWT_SECRET!,
+  algorithms: ["HS256"],
+  jwtFromRequest: JwtStrategy.ExtractJwt.fromAuthHeaderAsBearerToken(),
+};
+passport.use(
+  new JwtStrategy.Strategy(passportOpts, async (jwt_payload, done) => {
+    try {
+      const user = await db.user.findUnique({
+        where: {
+          id: jwt_payload.sub,
+        },
+      });
+      if (!user) {
+        return done(null, false);
+      } else {
+        return done(null, user);
+      }
+    } catch (err) {
+      return done(err, false);
+    }
+  }),
+);
 app.use("/", indexRouter);
 app.use("/posts", postsRouter);
 
@@ -50,16 +76,16 @@ async function onError(error: Error & { syscall?: string; code?: string }) {
   switch (error.code) {
     case "EACCES":
       console.error(bind + " requires elevated privileges");
-      // await db.$disconnect();
+      await db.$disconnect();
       process.exit(1);
       break;
     case "EADDRINUSE":
       console.error(bind + " is already in use");
-      // await db.$disconnect();
+      await db.$disconnect();
       process.exit(1);
       break;
     default:
-      // await db.$disconnect();
+      await db.$disconnect();
       throw error;
   }
 }
@@ -72,7 +98,7 @@ function onListening() {
 
 //graceful shutdowns
 process.on("SIGHUP", async () => {
-  // await db.$disconnect();
+  await db.$disconnect();
   server.close((err) => {
     console.log(err);
   });
@@ -80,7 +106,7 @@ process.on("SIGHUP", async () => {
 });
 
 process.on("SIGINT", async () => {
-  // await db.$disconnect();
+  await db.$disconnect();
   server.close((err) => {
     console.log(err);
   });
@@ -88,7 +114,7 @@ process.on("SIGINT", async () => {
 });
 
 process.on("SIGTERM", async () => {
-  // await db.$disconnect();
+  await db.$disconnect();
   server.close((err) => {
     console.log(err);
   });
@@ -96,7 +122,7 @@ process.on("SIGTERM", async () => {
 });
 
 process.on("exit", async () => {
-  // await db.$disconnect();
+  await db.$disconnect();
   server.close((err) => {
     console.log(err);
   });
