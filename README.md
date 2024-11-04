@@ -72,13 +72,13 @@ This is the complete list of api routes as of 2024-10-17:
 - POST `/register`
 - GET `/posts`
 - POST `/posts`
-- GET `/posts/:postId`
-- PUT `/posts/:postId`
-- DELETE `/posts/:postId`
-- GET `/posts/:postId/comments`
-- POST `posts/:postId/comments`
-- PUT `/posts/:postId/comments/:commentId`
-- DELETE `/posts/:postId/comments/:commentId`
+- GET `/posts/:postSlug`
+- PUT `/posts/:postSlug`
+- DELETE `/posts/:postSlug`
+- GET `/posts/:postSlug/comments`
+- POST `posts/:postSlug/comments`
+- PUT `/posts/:postSlug/comments/:commentId`
+- DELETE `/posts/:postSlug/comments/:commentId`
 
 ## POST `/login`
 
@@ -200,7 +200,7 @@ on success response:
 
 on error response: standard error response.
 
-## GET `/posts/:postId`
+## GET `/posts/:postSlug`
 
 This will get an individual post. No query params. postId will be validated as a number.
 Only the admin can see unpublished posts.
@@ -225,7 +225,7 @@ on success response:
 
 on error response: standard error response
 
-## PUT `/posts/:postId`
+## PUT `/posts/:postSlug`
 
 Updates values from the post. only admin can perform this action
 
@@ -249,7 +249,7 @@ expected JSON body:
 
 on error response: standard error.
 
-## DELETE `/posts/:postId`
+## DELETE `/posts/:postSlug`
 
 route attributes:
 
@@ -265,7 +265,7 @@ on success response:
 }
 ```
 
-## GET `/posts/:postId/comments`
+## GET `/posts/:postSlug/comments`
 
 route attributes
 
@@ -296,7 +296,7 @@ on success response:
 }
 ```
 
-## POST `/posts/:postId/comments`
+## POST `/posts/:postSlug/comments`
 
 route attributes:
 
@@ -311,7 +311,7 @@ Expected JSON body:
 }
 ```
 
-## PUT `/posts/:postId/comments/:commentId`
+## PUT `/posts/:postSlug/comments/:commentId`
 
 route attributes:
 
@@ -328,7 +328,7 @@ Expected JSON body:
 
 on error response: standard error.
 
-## DELETE `/posts/:postId/comments/:commentId`
+## DELETE `/posts/:postSlug/comments/:commentId`
 
 route attributes:
 
