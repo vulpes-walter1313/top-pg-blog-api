@@ -134,16 +134,20 @@ On failure response:
 
 ## GET `/posts`
 
-This route will be paginated as there can be a lot of posts. The post areautomatically
+This route will be paginated as there can be a lot of posts. The post are automatically
 filtered to only show published posts if the user requesting this endpoint is unauthenticated
-or not an admin.
+or not an admin. If the user is admin, he is allowed to use
+the param `publishedstatus=<all | published | unpublished>`
 
 Query Params:
 
 - Limit (default 10)
-  - We can force an upper limit of 50 per pagei and a lower limit of 5 per page.
+  - We can force an upper limit of 50 per page and a lower limit of 5 per page.
 - Page (default 1)
   - Standard use case here
+- publishedstatus
+  - valid values are "all", "unpublished", "published"
+  - non-admin users can only see published posts
 
 On success response:
 
@@ -163,8 +167,8 @@ On success response:
     }
   ],
   "currentPage": 1,
-  "limit": 10,
-  "totalPages": 25
+  "totalPages": 25,
+  "totalPosts": 245
 }
 ```
 
