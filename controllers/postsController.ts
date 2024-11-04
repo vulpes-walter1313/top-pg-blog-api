@@ -7,7 +7,7 @@ import {
   validationResult,
   matchedData,
 } from "express-validator";
-import { checkJWT } from "../middleware/auth";
+import { checkJWT, protectRoute } from "../middleware/auth";
 import db from "../db/db";
 import { Prisma } from "@prisma/client";
 
@@ -112,9 +112,49 @@ export const postsGET = [
 
 // POST /posts
 export const postsPOST = [
-  (req: Request, res: Response, next: NextFunction) => {
-    res.json({ success: true, msg: "POST /posts to be implemented" });
-  },
+  protectRoute,
+  body("title").trim().isLength({ min: 1, max: 256 }).escape(),
+  body("content").trim().isLength({ min: 1, max: 4900 }).escape(),
+  body("slug").trim().isSlug(),
+  body("published").isBoolean(),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+    if (req.user && req.user.isAdmin === false) {
+      res.status(403).json({
+        success: false,
+        error: "You are not authorized to use this resource",
+      });
+      return;
+    }
+    // we know user is admin at this point
+    const title = String(data.title);
+    const content = String(data.content);
+    const slug = String(data.slug);
+    const isPublished = Boolean(data.published);
+    const newPost = await db.post.create({
+      data: {
+        title,
+        content,
+        slug,
+        published: isPublished,
+        authorId: req.user?.id!,
+      },
+      select: {
+        id: true,
+        slug: true,
+      },
+    });
+    res.json({
+      success: true,
+      msg: `new post ${newPost.id} created successfully: /posts/${newPost.slug}`,
+    });
+  }),
 ];
 
 // GET /posts/:postId
