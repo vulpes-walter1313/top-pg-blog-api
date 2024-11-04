@@ -9,8 +9,6 @@ import HttpError from "./lib/httpError";
 import morgan from "morgan";
 import indexRouter from "./routes/indexRouter";
 import postsRouter from "./routes/postsRouter";
-import passport from "passport";
-import JwtStrategy from "passport-jwt";
 import db from "./db/db";
 
 const app = express();
@@ -25,29 +23,6 @@ if (process.env.NODE_ENV === "production") {
   app.use(morgan("dev"));
 }
 
-const passportOpts: JwtStrategy.StrategyOptionsWithoutRequest = {
-  secretOrKey: process.env.JWT_SECRET!,
-  algorithms: ["HS256"],
-  jwtFromRequest: JwtStrategy.ExtractJwt.fromAuthHeaderAsBearerToken(),
-};
-passport.use(
-  new JwtStrategy.Strategy(passportOpts, async (jwt_payload, done) => {
-    try {
-      const user = await db.user.findUnique({
-        where: {
-          id: jwt_payload.sub,
-        },
-      });
-      if (!user) {
-        return done(null, false);
-      } else {
-        return done(null, user);
-      }
-    } catch (err) {
-      return done(err, false);
-    }
-  }),
-);
 app.use("/", indexRouter);
 app.use("/posts", postsRouter);
 
