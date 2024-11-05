@@ -157,63 +157,106 @@ export const postsPOST = [
   }),
 ];
 
-// GET /posts/:postId
+// GET /posts/:postSlug
 export const postGET = [
-  (req: Request, res: Response, next: NextFunction) => {
-    res.json({ success: true, msg: "GET /posts/:postId to be implemented" });
-  },
+  checkJWT,
+  param("postSlug").isSlug(),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: true, errors: valResult.array() });
+      return;
+    }
+    const post = await db.post.findUnique({
+      where: {
+        slug: data.postSlug,
+      },
+    });
+    if (!post) {
+      res
+        .status(404)
+        .json({
+          success: false,
+          error: "The post you're looking for doesn't exist",
+        });
+      return;
+    }
+
+    if (post.published === false) {
+      if (!req.user || req.user.isAdmin === false) {
+        res
+          .status(403)
+          .json({
+            success: false,
+            error: "You are not authorized to view this resource",
+          });
+        return;
+      }
+      res.json({ success: true, post: post });
+      return;
+    } else {
+      // this is a published post that anyone can see
+      res.json({ success: true, post: post });
+      return;
+    }
+  }),
 ];
 
-// PUT /posts/:postId
+// PUT /posts/:postSlug
 export const postPUT = [
   (req: Request, res: Response, next: NextFunction) => {
-    res.json({ success: true, msg: "PUT /posts/:postId to be implemented" });
+    res.json({ success: true, msg: "PUT /posts/:postSlug to be implemented" });
   },
 ];
 
-// DELETE /posts/:postId
+// DELETE /posts/:postSlug
 export const postDELETE = [
   (req: Request, res: Response, next: NextFunction) => {
-    res.json({ success: true, msg: "DELETE /posts/:postId to be implemented" });
+    res.json({
+      success: true,
+      msg: "DELETE /posts/:postSlug to be implemented",
+    });
   },
 ];
 
-// GET /posts/:postId/comments
+// GET /posts/:postSlug/comments
 export const postCommentsGET = [
   (req: Request, res: Response, next: NextFunction) => {
     res.json({
       success: true,
-      msg: "GET /posts/:postId/comments to be implemented",
+      msg: "GET /posts/:postSlug/comments to be implemented",
     });
   },
 ];
 
-// POST /posts/:postId/comments
+// POST /posts/:postSlug/comments
 export const postCommentsPOST = [
   (req: Request, res: Response, next: NextFunction) => {
     res.json({
       success: true,
-      msg: "POST /posts/:postId/comments to be implemented",
+      msg: "POST /posts/:postSlug/comments to be implemented",
     });
   },
 ];
 
-// PUT /posts/:postId/comments/:commentId
+// PUT /posts/:postSlug/comments/:commentId
 export const postCommentPUT = [
   (req: Request, res: Response, next: NextFunction) => {
     res.json({
       success: true,
-      msg: "PUT /posts/:postId/comments/:commentId to be implemented",
+      msg: "PUT /posts/:postSlug/comments/:commentId to be implemented",
     });
   },
 ];
 
-// DELETE /posts/:postId/comments/:commentId
+// DELETE /posts/:postSlug/comments/:commentId
 export const postCommentDELETE = [
   (req: Request, res: Response, next: NextFunction) => {
     res.json({
       success: true,
-      msg: "DELETE /posts/:postId/comments/:commentId to be implemented",
+      msg: "DELETE /posts/:postSlug/comments/:commentId to be implemented",
     });
   },
 ];
