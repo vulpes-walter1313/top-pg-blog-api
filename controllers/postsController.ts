@@ -247,12 +247,40 @@ export const postPUT = [
 
 // DELETE /posts/:postSlug
 export const postDELETE = [
-  (req: Request, res: Response, next: NextFunction) => {
+  protectRoute,
+  isAdmin,
+  param("postSlug").isSlug(),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    // at this point we know that the user is an Admin.
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+    const { postSlug } = data;
+    const postToDelete = await db.post.findUnique({
+      where: {
+        slug: postSlug,
+      },
+    });
+    if (!postToDelete) {
+      res
+        .status(404)
+        .json({ success: false, error: "Couldn't find this resource." });
+      return;
+    }
+    const deletedPost = await db.post.delete({
+      where: {
+        id: postToDelete.id,
+      },
+    });
+
     res.json({
       success: true,
-      msg: "DELETE /posts/:postSlug to be implemented",
+      msg: `Post ID: ${deletedPost.id} deleted successfully`,
     });
-  },
+  }),
 ];
 
 // GET /posts/:postSlug/comments
