@@ -285,12 +285,89 @@ export const postDELETE = [
 
 // GET /posts/:postSlug/comments
 export const postCommentsGET = [
-  (req: Request, res: Response, next: NextFunction) => {
+  protectRoute,
+  param("postSlug").isSlug(),
+  query("limit").isInt({ min: 5, max: 25 }),
+  query("page").isInt({ min: 1 }),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+    const { postSlug } = data;
+    const post = await db.post.findUnique({
+      where: {
+        slug: postSlug,
+      },
+      select: {
+        id: true,
+        published: true,
+      },
+    });
+    if (!post) {
+      res.status(404).json({ success: false, error: "Post does not exist" });
+      return;
+    }
+    if (post.published === false) {
+      res.status(403).json({
+        success: false,
+        error: "You are not authorized to access this resource",
+      });
+      return;
+    }
+    // post exists and is published
+
+    const limit = parseInt(data.limit || "10");
+    let page = parseInt(data.page || "1");
+
+    const totalComments = await db.comment.count({
+      where: {
+        postId: post.id,
+      },
+    });
+    const totalPages = Math.ceil(
+      totalComments === 0 ? 1 : totalComments / limit,
+    );
+    if (page > totalPages) page = totalPages;
+
+    const offset = (page - 1) * limit;
+
+    const comments = await db.comment.findMany({
+      where: {
+        postId: post.id,
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+      take: limit,
+      skip: offset,
+    });
+
     res.json({
       success: true,
-      msg: "GET /posts/:postSlug/comments to be implemented",
+      postId: post.id,
+      comments,
+      totalComments,
+      currentPage: page,
+      totalPages,
     });
-  },
+    return;
+  }),
 ];
 
 // POST /posts/:postSlug/comments
