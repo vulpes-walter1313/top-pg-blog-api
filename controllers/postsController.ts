@@ -7,7 +7,7 @@ import {
   validationResult,
   matchedData,
 } from "express-validator";
-import { checkJWT, protectRoute } from "../middleware/auth";
+import { checkJWT, protectRoute, isAdmin } from "../middleware/auth";
 import db from "../db/db";
 import { Prisma } from "@prisma/client";
 
@@ -202,9 +202,47 @@ export const postGET = [
 
 // PUT /posts/:postSlug
 export const postPUT = [
-  (req: Request, res: Response, next: NextFunction) => {
-    res.json({ success: true, msg: "PUT /posts/:postSlug to be implemented" });
-  },
+  protectRoute,
+  isAdmin,
+  param("postSlug").isSlug(),
+  body("title").trim().isLength({ min: 1, max: 256 }).escape(),
+  body("content").trim().isLength({ min: 1, max: 5000 }).escape(),
+  body("slug").isSlug(),
+  body("published").isBoolean(),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    // at this point auth token is verrified and user.isAdmin === true
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+    const title = String(data.title);
+    const content = String(data.content);
+    const isPublished = Boolean(data.published);
+    const slug = String(data.slug);
+    const { postSlug } = data;
+
+    const updatedPost = await db.post.update({
+      where: {
+        slug: postSlug,
+      },
+      data: {
+        title,
+        content,
+        published: isPublished,
+        slug,
+        updatedAt: new Date(Date.now()),
+      },
+    });
+
+    res.json({
+      success: true,
+      msg: `Post Id: ${updatedPost.id} has been updated`,
+    });
+    return;
+  }),
 ];
 
 // DELETE /posts/:postSlug
