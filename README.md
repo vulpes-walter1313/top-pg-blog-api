@@ -241,8 +241,9 @@ expected JSON body:
 
 ```json
 {
-  "title": "some toher cool title",
+  "title": "some other cool title",
   "content": "some other cool content",
+  "slug": "new-slug-here",
   "published": true
 }
 ```
