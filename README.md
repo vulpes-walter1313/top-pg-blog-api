@@ -285,7 +285,10 @@ on success response:
     {
       "id": 1,
       "content": "some cool comment here",
-      "authorName": "Jane Doe",
+      "author": {
+        "firstName": "John",
+        "lastName": "Doe"
+      },
       "createdAt": "2024-10-28T10:42:00.000Z",
       "updatedAt": "2024-10-28T10:42:00.000Z"
     }
