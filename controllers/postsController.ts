@@ -175,23 +175,19 @@ export const postGET = [
       },
     });
     if (!post) {
-      res
-        .status(404)
-        .json({
-          success: false,
-          error: "The post you're looking for doesn't exist",
-        });
+      res.status(404).json({
+        success: false,
+        error: "The post you're looking for doesn't exist",
+      });
       return;
     }
 
     if (post.published === false) {
       if (!req.user || req.user.isAdmin === false) {
-        res
-          .status(403)
-          .json({
-            success: false,
-            error: "You are not authorized to view this resource",
-          });
+        res.status(403).json({
+          success: false,
+          error: "You are not authorized to view this resource",
+        });
         return;
       }
       res.json({ success: true, post: post });
