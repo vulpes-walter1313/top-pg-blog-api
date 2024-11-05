@@ -89,3 +89,29 @@ export async function protectRoute(
     return;
   }
 }
+
+/**
+ * This middleware stops requests that are not from an admin user.
+ *
+ * @param req - Express request
+ * @param res - Express response
+ * @param next - Express NextFunction
+ *
+ */
+export function isAdmin(req: Request, res: Response, next: NextFunction) {
+  if (!req.user) {
+    res
+      .status(401)
+      .json({ success: false, error: "User is not authenticated" });
+    return;
+  }
+  if (req.user.isAdmin === false) {
+    res.status(403).json({
+      success: false,
+      error: "You are not authorized to use this resource",
+    });
+    return;
+  }
+  next();
+  return;
+}
