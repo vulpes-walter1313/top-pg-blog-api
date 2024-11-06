@@ -417,6 +417,71 @@ export const postCommentsPOST = [
   }),
 ];
 
+// GET /posts/:postSlug/comments/:commentId
+export const postCommentGET = [
+  param("postSlug").isSlug(),
+  param("commentId").isInt({ min: 1 }),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+    const postSlug = String(data.postSlug);
+    const commentId = parseInt(data.commentId);
+
+    const post = await db.post.findUnique({
+      where: {
+        slug: postSlug,
+      },
+      select: {
+        id: true,
+        published: true,
+      },
+    });
+    if (!post) {
+      res.status(400).json({ success: false, error: "Post not found" });
+      return;
+    }
+    if (post.published === false && req.user?.isAdmin === false) {
+      res.status(403).json({
+        success: false,
+        error: "You're not authorized to get comments from this post",
+      });
+      return;
+    }
+
+    const comment = await db.comment.findUnique({
+      where: {
+        id: commentId,
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    if (!comment) {
+      res.status(404).json({ success: false, error: "Comment not found" });
+      return;
+    }
+
+    res.json({
+      success: true,
+      comment: comment,
+    });
+  }),
+];
 // PUT /posts/:postSlug/comments/:commentId
 export const postCommentPUT = [
   (req: Request, res: Response, next: NextFunction) => {

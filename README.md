@@ -315,6 +315,30 @@ Expected JSON body:
 }
 ```
 
+## GET `/posts/:postSlug/comments/:commentId`
+
+route attributes
+
+- accessible to anyone as long as the post is published
+
+Expected JSON body:
+
+```json
+{
+  "success": true,
+  "comment": {
+    "id": 1,
+    "author": {
+      "firstName": "John",
+      "lastName": "Doe"
+    },
+    "content": "some comment here",
+    "createdAt": "2024-11-06T10:13:00.000Z",
+    "updatedAt": "2024-11-06T10:13:00.000Z"
+  }
+}
+```
+
 ## PUT `/posts/:postSlug/comments/:commentId`
 
 route attributes:
