@@ -11,11 +11,7 @@ router.put("/:postSlug", postController.postPUT);
 router.delete("/:postSlug", postController.postDELETE);
 router.get("/:postSlug/comments", postController.postCommentsGET);
 router.post("/:postSlug/comments", postController.postCommentsPOST);
-router.get(
-  "/:postSlug/comments/:commentId",
-
-  postController.postCommentGET,
-);
+router.get("/:postSlug/comments/:commentId", postController.postCommentGET);
 router.put("/:postSlug/comments/:commentId", postController.postCommentPUT);
 router.delete(
   "/:postSlug/comments/:commentId",

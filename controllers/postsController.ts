@@ -484,12 +484,78 @@ export const postCommentGET = [
 ];
 // PUT /posts/:postSlug/comments/:commentId
 export const postCommentPUT = [
-  (req: Request, res: Response, next: NextFunction) => {
+  protectRoute,
+  param("postSlug").isSlug(),
+  param("commentId").isInt({ min: 1 }),
+  body("content").trim().isLength({ min: 1, max: 1024 }).escape(),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+
+    const postSlug = String(data.postSlug);
+    const post = await db.post.findUnique({
+      where: {
+        slug: postSlug,
+      },
+      select: {
+        id: true,
+        published: true,
+      },
+    });
+    if (!post) {
+      res.status(404).json({ success: false, error: "Post not found" });
+      return;
+    }
+    if (post.published === false && req.user?.isAdmin === false) {
+      res.status(403).json({
+        success: false,
+        error: "You are not authorized to use this resource",
+      });
+      return;
+    }
+
+    const commentId = parseInt(data.commentId);
+    const updatedContent = String(data.content);
+
+    const comment = await db.comment.findUnique({
+      where: {
+        id: commentId,
+      },
+    });
+
+    if (!comment) {
+      res.status(404).json({ success: false, error: "Comment does not exist" });
+      return;
+    }
+    const canEdit = req.user?.isAdmin || comment?.authorId === req.user?.id;
+    if (!canEdit) {
+      res.status(403).json({
+        success: false,
+        error: "You are not authorized to perform this action",
+      });
+      return;
+    }
+
+    await db.comment.update({
+      where: {
+        id: comment.id,
+      },
+      data: {
+        content: updatedContent,
+        updatedAt: new Date(Date.now()),
+      },
+    });
+
     res.json({
       success: true,
-      msg: "PUT /posts/:postSlug/comments/:commentId to be implemented",
+      msg: `Comment id: ${comment.id} updated successfully`,
     });
-  },
+  }),
 ];
 
 // DELETE /posts/:postSlug/comments/:commentId
