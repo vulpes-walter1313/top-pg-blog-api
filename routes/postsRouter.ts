@@ -12,7 +12,8 @@ router.delete("/:postSlug", postController.postDELETE);
 router.get("/:postSlug/comments", postController.postCommentsGET);
 router.post("/:postSlug/comments", postController.postCommentsPOST);
 router.get(
-  "/posts/:postSlug/comments/:commentId",
+  "/:postSlug/comments/:commentId",
+
   postController.postCommentGET,
 );
 router.put("/:postSlug/comments/:commentId", postController.postCommentPUT);
