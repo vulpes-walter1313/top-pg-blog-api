@@ -372,12 +372,49 @@ export const postCommentsGET = [
 
 // POST /posts/:postSlug/comments
 export const postCommentsPOST = [
-  (req: Request, res: Response, next: NextFunction) => {
+  protectRoute,
+  param("postSlug").isSlug(),
+  body("content").trim().isLength({ min: 1, max: 1024 }).escape(),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+    const postSlug = String(data.postSlug);
+    const post = await db.post.findUnique({
+      where: {
+        slug: postSlug,
+      },
+    });
+    if (!post) {
+      res.status(404).json({ success: false, error: "Post not found" });
+      return;
+    }
+    if (post.published === false && req.user?.isAdmin === false) {
+      res.status(403).json({
+        success: false,
+        error: "You are not authorized to access this resource",
+      });
+      return;
+    }
+
+    const content = String(data.content);
+    const newComment = await db.comment.create({
+      data: {
+        content: content,
+        postId: post.id,
+        authorId: req.user?.id!,
+      },
+    });
+
     res.json({
       success: true,
-      msg: "POST /posts/:postSlug/comments to be implemented",
+      msg: `new comment ${newComment.id} created successfully`,
     });
-  },
+  }),
 ];
 
 // PUT /posts/:postSlug/comments/:commentId
