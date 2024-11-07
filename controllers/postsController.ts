@@ -201,6 +201,25 @@ export const postGET = [
       where: {
         slug: data.postSlug,
       },
+      select: {
+        id: true,
+        published: true,
+        title: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+        author: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
+      },
     });
     if (!post) {
       res.status(404).json({
