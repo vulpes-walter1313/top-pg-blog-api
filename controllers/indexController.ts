@@ -4,6 +4,7 @@ import { body, matchedData, validationResult } from "express-validator";
 import db from "../db/db";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { checkJWT, protectRoute } from "../middleware/auth";
 
 export const loginPost = [
   body("email").isEmail().withMessage("Must be a valid email"),
@@ -117,6 +118,15 @@ export const registerPost = [
   }),
 ];
 
-export const indexGet = (req: Request, res: Response, next: NextFunction) => {
-  res.json({ success: true, msg: "Hello to blogapi!" });
-};
+export const authCheckGET = [
+  checkJWT,
+  (req: Request, res: Response, next: NextFunction) => {
+    if (req.user) {
+      res.status(200).json({ success: true, msg: "You are authenticated"});
+      return;
+    } else {
+      res.status(200).json({ success: false, msg: "You are not authenticated"});
+      return;
+    }
+  }
+]
