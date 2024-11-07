@@ -61,6 +61,20 @@ export const postsGET = [
       const offset = (page - 1) * limit;
       const posts = await db.post.findMany({
         where: whereOptions,
+        select: {
+          id: true,
+          createdAt: true,
+          updatedAt: true,
+          title: true,
+          content: true,
+          slug: true,
+          published: true,
+          _count: {
+            select: {
+              comments: true,
+            },
+          },
+        },
         orderBy: {
           updatedAt: "desc",
         },
@@ -91,6 +105,20 @@ export const postsGET = [
     const posts = await db.post.findMany({
       where: {
         published: true,
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        updatedAt: true,
+        title: true,
+        content: true,
+        slug: true,
+        published: true,
+        _count: {
+          select: {
+            comments: true,
+          },
+        },
       },
       orderBy: {
         updatedAt: "desc",
