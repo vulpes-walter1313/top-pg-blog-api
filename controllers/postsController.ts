@@ -560,10 +560,85 @@ export const postCommentPUT = [
 
 // DELETE /posts/:postSlug/comments/:commentId
 export const postCommentDELETE = [
-  (req: Request, res: Response, next: NextFunction) => {
+  protectRoute,
+  param("postSlug").isSlug(),
+  param("commentId").isInt({ min: 1 }),
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+    const valResult = validationResult(req);
+    const data = matchedData(req);
+
+    if (!valResult.isEmpty()) {
+      res.status(400).json({ success: false, errors: valResult.array() });
+      return;
+    }
+
+    const postSlug = String(data.postSlug);
+    const post = await db.post.findUnique({
+      where: {
+        slug: postSlug,
+      },
+      select: {
+        id: true,
+        published: true,
+      },
+    });
+
+    if (!post) {
+      res.status(404).json({ success: false, error: "Post Not found" });
+      return;
+    }
+
+    if (post.published === false && req.user?.isAdmin === false) {
+      res.status(403).json({
+        success: false,
+        error: "You are not authorized to access this resource",
+      });
+      return;
+    }
+
+    const commentId = parseInt(data.commentId);
+    const comment = await db.comment.findUnique({
+      where: {
+        id: commentId,
+      },
+      select: {
+        id: true,
+        content: true,
+        createdAt: true,
+        updatedAt: true,
+        authorId: true,
+        author: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    if (!comment) {
+      res.status(404).json({ success: false, error: "Comment does not exist" });
+      return;
+    }
+
+    const canDelete = req.user?.isAdmin || req.user?.id === comment.authorId;
+    if (!canDelete) {
+      res.status(403).json({
+        success: false,
+        error: "You are not authorized to use this resource",
+      });
+      return;
+    }
+
+    await db.comment.delete({
+      where: {
+        id: comment.id,
+      },
+    });
+
     res.json({
       success: true,
-      msg: "DELETE /posts/:postSlug/comments/:commentId to be implemented",
+      msg: `CommentID: ${comment.id} has been successfuly deleted`,
     });
-  },
+  }),
 ];
