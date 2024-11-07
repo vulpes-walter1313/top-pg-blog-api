@@ -122,11 +122,13 @@ export const authCheckGET = [
   checkJWT,
   (req: Request, res: Response, next: NextFunction) => {
     if (req.user) {
-      res.status(200).json({ success: true, msg: "You are authenticated"});
+      res.status(200).json({ success: true, msg: "You are authenticated" });
       return;
     } else {
-      res.status(200).json({ success: false, msg: "You are not authenticated"});
+      res
+        .status(200)
+        .json({ success: false, msg: "You are not authenticated" });
       return;
     }
-  }
-]
+  },
+];
