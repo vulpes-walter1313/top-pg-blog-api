@@ -208,6 +208,7 @@ export const postGET = [
         content: true,
         createdAt: true,
         updatedAt: true,
+        slug: true,
         author: {
           select: {
             firstName: true,
