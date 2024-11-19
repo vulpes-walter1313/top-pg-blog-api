@@ -15,13 +15,15 @@ datasource db {
 
 model User {
   id        String    @id @default(uuid())
-  firstName String    @db.VarChar(30)
-  lastName  String    @db.VarChar(30)
+  firstName String    @map("first_name") @db.VarChar(30)
+  lastName  String    @map("last_name") @db.VarChar(30)
   email     String    @unique @db.VarChar(320)
   password  String
-  isAdmin   Boolean   @default(false)
+  isAdmin   Boolean   @default(false) @map("is_admin")
   posts     Post[]
   comments  Comment[]
+
+  @@map("users")
 }
 
 model Post {
@@ -30,20 +32,24 @@ model Post {
   content   String    @db.VarChar(5000)
   slug      String    @unique
   published Boolean   @default(false)
-  authorId  String
+  authorId  String    @map("author_id")
   author    User      @relation(fields: [authorId], references: [id])
-  createdAt DateTime  @default(now()) @db.Timestamptz()
-  updatedAt DateTime  @default(now()) @db.Timestamptz()
+  createdAt DateTime  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime  @default(now()) @map("updated_at") @db.Timestamptz()
   comments  Comment[]
+
+  @@map("posts")
 }
 
 model Comment {
   id        Int      @id @default(autoincrement())
   content   String   @db.VarChar(1024)
-  createdAt DateTime @default(now()) @db.Timestamptz()
-  updatedAt DateTime @default(now()) @db.Timestamptz()
-  authorId  String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt DateTime @default(now()) @map("updated_at") @db.Timestamptz()
+  authorId  String   @map("author_id")
   author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  postId    Int
+  postId    Int      @map("post_id")
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@map("comments")
 }
