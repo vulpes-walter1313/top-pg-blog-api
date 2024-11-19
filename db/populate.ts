@@ -6,7 +6,7 @@ import slugify from "slugify";
 
 async function main() {
   try {
-    // create 3 users, 1 admin and 2 regular users
+    // create 5 users, 1 admin and 4 regular users
     const passwordHash = await bcrypt.hash("pass1234", 10);
     const adminUser = await db.user.create({
       data: {
@@ -19,7 +19,7 @@ async function main() {
     });
     console.log(`created Admin user: ${adminUser.email}`);
 
-    const regularUsersData = Array.from({ length: 2 }).map((item) => {
+    const regularUsersData = Array.from({ length: 4 }).map((item) => {
       return {
         firstName: faker.person.firstName(),
         lastName: faker.person.lastName(),
@@ -36,9 +36,9 @@ async function main() {
     });
 
     console.log(`created All regular users...`);
-    // create 3 posts from admin user
+    // create 50 posts from admin user
 
-    const postsContentData = Array.from({ length: 3 }).map((_) => {
+    const postsContentData = Array.from({ length: 50 }).map((_) => {
       const title = faker.lorem.sentence();
       const slug = slugify(title, { lower: true });
       return {
@@ -70,7 +70,8 @@ async function main() {
     }[] = [];
     for (let post of publishedPosts) {
       for (let user of regularUsers) {
-        for (let i = 0; i < 3; i++) {
+        // creating 10 comments for each user
+        for (let i = 0; i < 10; i++) {
           const comment = {
             content: faker.lorem.sentences({ min: 1, max: 3 }),
             authorId: user.id,
@@ -92,7 +93,7 @@ async function main() {
     await db.$disconnect();
     process.exit(1);
   }
-  // for each post, have the 2 users leave 3 comments on each post
+  // for each post, have the 4 users leave 10 comments on each post
 }
 
 main();
