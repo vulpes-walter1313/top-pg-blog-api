@@ -10,6 +10,7 @@ import {
 import { checkJWT, protectRoute, isAdmin } from "../middleware/auth";
 import db from "../db/db";
 import { Prisma } from "@prisma/client";
+import { customJson } from "../lib/utils";
 
 // GET /posts
 export const postsGET = [
@@ -19,12 +20,14 @@ export const postsGET = [
   query("publishedstatus").custom((val) => {
     return ["all", "published", "unpublished"].includes(val);
   }),
+  query("summarize").isBoolean().optional(),
   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const valResult = validationResult(req);
     const data = matchedData(req);
     let limit: number;
     let page: number;
     let publishedStatus: "all" | "published" | "unpublished";
+    let summarize: boolean;
 
     if (!valResult.isEmpty()) {
       res.status(400).json({ success: false, errors: valResult.array() });
@@ -32,6 +35,12 @@ export const postsGET = [
     }
     limit = parseInt(data.limit || "10");
     page = parseInt(data.page || "1");
+    if (data.summarize === "true") {
+      summarize = true;
+    } else {
+      summarize = false;
+    }
+
     switch (data.publishedstatus) {
       case "all":
         publishedStatus = "all";
@@ -59,31 +68,57 @@ export const postsGET = [
       const totalPages = Math.ceil((totalPosts === 0 ? 1 : totalPosts) / limit);
       if (page > totalPages) page = totalPages;
       const offset = (page - 1) * limit;
-      const posts = await db.post.findMany({
-        where: whereOptions,
-        select: {
-          id: true,
-          createdAt: true,
-          updatedAt: true,
-          title: true,
-          content: true,
-          slug: true,
-          published: true,
-          _count: {
-            select: {
-              comments: true,
-            },
-          },
-        },
-        orderBy: {
-          updatedAt: "desc",
-        },
-        take: limit,
-        skip: offset,
-      });
+      let posts: any;
+      let whereClause = "";
+      if (publishedStatus === "all") {
+        whereClause = "";
+      } else if (publishedStatus === "published") {
+        whereClause = "WHERE published = TRUE";
+      } else if (publishedStatus === "unpublished") {
+        whereClause = "WHERE published = FALSE";
+      }
+      if (summarize) {
+        posts = await db.$queryRawUnsafe(`SELECT 
+          p.id,
+          p.created_at,
+          p.updated_at,
+          p.title,
+          CASE
+            WHEN LENGTH(p.content) > 220
+              THEN CONCAT(LEFT(p.content, 220), '...')
+              ELSE p.content
+          END AS content,
+          slug,
+          published,
+          COUNT(c.id) AS comments
+          FROM posts p
+          LEFT JOIN comments c ON c.post_id = p.id
+          ${whereClause}
+          GROUP BY p.id
+          ORDER BY p.updated_at DESC, p.title
+          LIMIT ${limit}
+          OFFSET ${offset}`);
+      } else {
+        posts = await db.$queryRawUnsafe(`SELECT
+          id,
+          created_at,
+          updated_at,
+          title,
+          content,
+          published,
+          COUNT(c.id)
+          FROM posts p
+          LEFT JOIN comments c ON c.post_id = p.id
+          ${whereClause}
+          GROUP BY p.id
+          ORDER BY updated_at DESC, p.title
+          LIMIT ${limit}
+          OFFSET ${offset}`);
+      }
+
       res.json({
         success: true,
-        posts: posts,
+        posts: JSON.parse(customJson(posts)),
         totalPosts,
         totalPages,
         currentPage: page,
@@ -102,34 +137,49 @@ export const postsGET = [
     if (page > totalPages) page = totalPages;
     const offset = (page - 1) * limit;
 
-    const posts = await db.post.findMany({
-      where: {
-        published: true,
-      },
-      select: {
-        id: true,
-        createdAt: true,
-        updatedAt: true,
-        title: true,
-        content: true,
-        slug: true,
-        published: true,
-        _count: {
-          select: {
-            comments: true,
-          },
-        },
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-      take: limit,
-      skip: offset,
-    });
+    let posts: any;
+    if (summarize) {
+      posts = await db.$queryRawUnsafe(`SELECT 
+          p.id,
+          p.created_at,
+          p.updated_at,
+          p.title,
+          CASE
+            WHEN LENGTH(p.content) > 220
+              THEN CONCAT(LEFT(p.content, 220), '...')
+              ELSE p.content
+          END AS content,
+          slug,
+          published,
+          COUNT(c.id) AS comments
+          FROM posts p
+          LEFT JOIN comments c ON c.post_id = p.id
+          WHERE published = TRUE
+          GROUP BY p.id
+          ORDER BY p.updated_at DESC, p.title
+          LIMIT ${limit}
+          OFFSET ${offset}`);
+    } else {
+      posts = await db.$queryRawUnsafe(`SELECT
+          id,
+          created_at,
+          updated_at,
+          title,
+          content,
+          published,
+          COUNT(c.id)
+          FROM posts p
+          LEFT JOIN comments c ON c.post_id = p.id
+          WHERE published = TRUE
+          GROUP BY p.id
+          ORDER BY updated_at DESC, p.title
+          LIMIT ${limit}
+          OFFSET ${offset}`);
+    }
 
     res.json({
       success: true,
-      posts: posts,
+      posts: JSON.parse(customJson(posts)),
       totalPages: totalPages,
       totalPosts: totalPosts,
       currentPage: page,
