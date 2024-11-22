@@ -10,11 +10,13 @@ import morgan from "morgan";
 import indexRouter from "./routes/indexRouter";
 import postsRouter from "./routes/postsRouter";
 import db from "./db/db";
+import cors from "cors";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000");
 
 app.use(express.json());
+app.use(cors());
 app.set("port", PORT);
 
 if (process.env.NODE_ENV === "production") {
