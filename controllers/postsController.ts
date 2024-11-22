@@ -383,7 +383,7 @@ export const postDELETE = [
 
 // GET /posts/:postSlug/comments
 export const postCommentsGET = [
-  protectRoute,
+  checkJWT,
   param("postSlug").isSlug(),
   query("limit").isInt({ min: 5, max: 25 }),
   query("page").isInt({ min: 1 }),
