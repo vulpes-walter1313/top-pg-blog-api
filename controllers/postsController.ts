@@ -444,6 +444,7 @@ export const postCommentsGET = [
         updatedAt: true,
         author: {
           select: {
+            id: true,
             firstName: true,
             lastName: true,
           },

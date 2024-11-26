@@ -118,6 +118,7 @@ export const registerPost = [
   }),
 ];
 
+// GET /authcheck
 export const authCheckGET = [
   checkJWT,
   (req: Request, res: Response, next: NextFunction) => {
@@ -126,6 +127,7 @@ export const authCheckGET = [
         success: true,
         msg: "You are authenticated",
         user: {
+          id: req.user.id,
           firstName: req.user.firstName,
           lastName: req.user.lastName,
           email: req.user.email,
