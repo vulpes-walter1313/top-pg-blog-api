@@ -11,16 +11,32 @@ import indexRouter from "./routes/indexRouter";
 import postsRouter from "./routes/postsRouter";
 import db from "./db/db";
 import cors from "cors";
+import { rateLimit } from "express-rate-limit";
+import helmet from "helmet";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000");
 
 app.use(express.json());
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      process.env.ADMIN_FE_URL ?? "http://localhost:5173",
+      process.env.FE_URL ?? "http://localhost:3001",
+    ],
+  }),
+);
 app.set("port", PORT);
 
 if (process.env.NODE_ENV === "production") {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 100,
+    message: "Please cool down on the requests.",
+  });
+  app.use(limiter);
   app.use(morgan("common"));
+  app.use(helmet());
 } else {
   app.use(morgan("dev"));
 }

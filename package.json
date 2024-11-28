@@ -5,6 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc && prisma migrate deploy",
+    "start": "node ./dist/app.js",
     "dev": "tsx watch ./app.ts",
     "prettier": "prettier . --write",
     "db:migrate": "prisma migrate dev",
@@ -35,7 +37,9 @@
     "dotenv": "^16.4.5",
     "express": "^4.21.1",
     "express-async-handler": "^1.2.0",
+    "express-rate-limit": "^7.4.1",
     "express-validator": "^7.2.0",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "passport": "^0.7.0",
