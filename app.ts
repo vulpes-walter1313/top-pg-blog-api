@@ -13,6 +13,7 @@ import db from "./db/db";
 import cors from "cors";
 import { rateLimit } from "express-rate-limit";
 import helmet from "helmet";
+import compression from "compression";
 
 const app = express();
 const PORT = parseInt(process.env.PORT || "3000");
@@ -37,6 +38,8 @@ if (process.env.NODE_ENV === "production") {
   app.use(limiter);
   app.use(morgan("common"));
   app.use(helmet());
+  app.use(compression());
+  app.set("trust proxy", 1);
 } else {
   app.use(morgan("dev"));
 }
